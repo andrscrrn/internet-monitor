@@ -40,7 +40,11 @@ export function loadState() {
 
 export function saveState(state) {
   ensureDataDir();
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state));
+  // Write-then-rename so a crash mid-write can't leave a corrupt state.json
+  // (which would silently reset ongoing-outage tracking on restart).
+  const tmp = STATE_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(state));
+  fs.renameSync(tmp, STATE_FILE);
 }
 
 function readJsonl(file) {
