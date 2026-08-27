@@ -26,6 +26,10 @@ const DEFAULTS = {
   wakeGraceMs: 15_000,
   notificationsEnabled: true,
   port: 5757,
+  // Only reachable from this machine by default; set to "0.0.0.0" in
+  // config.json to expose the dashboard to your LAN (e.g. to open it from
+  // your phone).
+  host: '127.0.0.1',
   retentionDays: 30,
 };
 

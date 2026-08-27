@@ -120,7 +120,7 @@ export function startServer() {
     res.end('Not found');
   });
 
-  server.listen(CONFIG.port, () => {
+  server.listen(CONFIG.port, CONFIG.host, () => {
     console.log(`Dashboard: http://localhost:${CONFIG.port}`);
   });
 
