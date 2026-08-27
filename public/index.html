@@ -951,8 +951,9 @@ function scheduleNextRefresh() {
 refresh().catch((err) => console.error('refresh failed', err)).then(scheduleNextRefresh);
 
 setInterval(updateSinceOutageDisplay, 1_000);
-window.addEventListener('resize', refresh);
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refresh);
+// Neither needs new data — the points are already in memory; just redraw.
+window.addEventListener('resize', redrawCharts);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawCharts);
 </script>
 </body>
 </html>
