@@ -66,15 +66,27 @@ export function classify(results, degradedLatencyMs) {
   return { status, lossPct, avgMs };
 }
 
+// A single dropped ICMP packet in one isolated tick is normal network noise,
+// not degradation. Partial loss only counts as degraded when it persists
+// across consecutive ticks; the loss is still recorded either way.
+let prevPartialLoss = false;
+
 export async function runCheck(config) {
   const [results, dnsOk] = await Promise.all([
     pingAll(config.targets, config.pingTimeoutSec),
     dnsCheck(config.dnsCheckHost, 1200),
   ]);
   const { status, lossPct, avgMs } = classify(results, config.degradedLatencyMs);
+
+  const partialLoss = lossPct > 0 && lossPct < 100;
+  const partialLossOnly =
+    status === 'degraded' && partialLoss && (avgMs == null || avgMs <= config.degradedLatencyMs);
+  let effectiveStatus = partialLossOnly && !prevPartialLoss ? 'up' : status;
+  prevPartialLoss = partialLoss;
+
   // Pings reaching raw IPs while DNS fails means the connection is unusable
   // for normal browsing — that's degraded, not "up".
-  const effectiveStatus = status === 'up' && !dnsOk ? 'degraded' : status;
+  if (effectiveStatus === 'up' && !dnsOk) effectiveStatus = 'degraded';
   return {
     t: Date.now(),
     status: effectiveStatus,
