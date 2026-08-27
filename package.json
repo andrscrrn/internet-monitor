@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "start": "node src/main.js",
-    "report": "node scripts/report.js"
+    "report": "node scripts/report.js",
+    "test": "node --test"
   },
   "dependencies": {
     "pdfkit": "^0.20.1"
