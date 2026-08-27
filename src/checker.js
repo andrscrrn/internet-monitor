@@ -72,9 +72,12 @@ export async function runCheck(config) {
     dnsCheck(config.dnsCheckHost, 1200),
   ]);
   const { status, lossPct, avgMs } = classify(results, config.degradedLatencyMs);
+  // Pings reaching raw IPs while DNS fails means the connection is unusable
+  // for normal browsing — that's degraded, not "up".
+  const effectiveStatus = status === 'up' && !dnsOk ? 'degraded' : status;
   return {
     t: Date.now(),
-    status,
+    status: effectiveStatus,
     lossPct,
     avgMs,
     dnsOk,
