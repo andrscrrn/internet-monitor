@@ -934,15 +934,21 @@ renderZoomIndicator();
 
 // Poll fast while an outage is actively in progress, so the big overlay's
 // timer and the moment it hides both track reality closely; back off to a
-// normal pace once things are calm again.
+// normal pace once things are calm again. A failed refresh (server restart,
+// dropped connection) must never kill the loop — this page's whole job is to
+// keep watching.
 function scheduleNextRefresh() {
   const delay = lastKnownOngoingStart ? 1_000 : 3_000;
   setTimeout(async () => {
-    await refresh();
+    try {
+      await refresh();
+    } catch (err) {
+      console.error('refresh failed', err);
+    }
     scheduleNextRefresh();
   }, delay);
 }
-refresh().then(scheduleNextRefresh);
+refresh().catch((err) => console.error('refresh failed', err)).then(scheduleNextRefresh);
 
 setInterval(updateSinceOutageDisplay, 1_000);
 window.addEventListener('resize', refresh);
