@@ -19,7 +19,7 @@ function parseArgs() {
 function fmtDateTime(ts) {
   const d = new Date(ts);
   const date = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-  const time = d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   return `${date}, ${time}`;
 }
 
@@ -66,13 +66,19 @@ function drawSummaryCards(doc, items) {
   const margin = doc.page.margins.left;
   const usableWidth = doc.page.width - margin * 2;
   const cardW = usableWidth / items.length;
-  const cardH = 50;
+  const valueWidth = cardW - 8;
+
+  doc.fontSize(16).font('Helvetica-Bold');
+  const valueHeight = Math.max(...items.map((item) => doc.heightOfString(item.value, { width: valueWidth })));
+  const labelY = valueHeight + 4;
+  const cardH = labelY + 12;
+
   ensureSpace(doc, cardH + 10, doc.page.margins.bottom);
   const y = doc.y;
   items.forEach((item, i) => {
     const x = margin + i * cardW;
-    doc.fontSize(16).fillColor(COLOR.text).font('Helvetica-Bold').text(item.value, x, y, { width: cardW - 8 });
-    doc.fontSize(8).fillColor(COLOR.muted).font('Helvetica').text(item.label, x, y + 20, { width: cardW - 8 });
+    doc.fontSize(16).fillColor(COLOR.text).font('Helvetica-Bold').text(item.value, x, y, { width: valueWidth });
+    doc.fontSize(8).fillColor(COLOR.muted).font('Helvetica').text(item.label, x, y + labelY, { width: valueWidth });
   });
   doc.x = margin;
   doc.y = y + cardH;
@@ -124,7 +130,7 @@ function drawTimelineBar(doc, points, width, height) {
   ensureSpace(doc, height + 10, doc.page.margins.bottom);
   const y = doc.y;
   if (!points.length) {
-    doc.fontSize(9).fillColor(COLOR.muted).text('Sin datos', margin, y);
+    doc.fontSize(9).fillColor(COLOR.muted).text('No data', margin, y);
     doc.y = y + height;
     return;
   }
@@ -161,7 +167,7 @@ function drawLineChart(doc, points, width, height, key, color, unit) {
     });
     doc.stroke();
   } else {
-    doc.fontSize(9).fillColor(COLOR.muted).text('Sin datos', margin, top + height / 2);
+    doc.fontSize(9).fillColor(COLOR.muted).text('No data', margin, top + height / 2);
   }
   doc.y = top + height + 10;
 }
@@ -186,50 +192,50 @@ async function main() {
 
   const outDir = path.join(ROOT_DIR, 'reports');
   fs.mkdirSync(outDir, { recursive: true });
-  const outPath = out || path.join(outDir, `reporte-internet-${new Date(now).toISOString().slice(0, 10)}.pdf`);
+  const outPath = out || path.join(outDir, `internet-report-${new Date(now).toISOString().slice(0, 10)}.pdf`);
 
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
   doc.pipe(fs.createWriteStream(outPath));
 
-  doc.fontSize(18).font('Helvetica-Bold').fillColor(COLOR.text).text('Reporte de Conexion a Internet');
+  doc.fontSize(18).font('Helvetica-Bold').fillColor(COLOR.text).text('Internet Connection Report');
   doc.fontSize(10).font('Helvetica').fillColor(COLOR.muted)
-    .text(`Periodo: ${fmtDateTime(start)} - ${fmtDateTime(now)}`)
-    .text(`Generado: ${fmtDateTime(now)}`);
+    .text(`Period: ${fmtDateTime(start)} - ${fmtDateTime(now)}`)
+    .text(`Generated: ${fmtDateTime(now)}`);
   doc.moveDown(1);
 
-  drawSectionTitle(doc, 'Resumen');
+  drawSectionTitle(doc, 'Summary');
   drawSummaryCards(doc, [
     { label: 'Uptime', value: summary.uptimePct != null ? summary.uptimePct + '%' : '--' },
-    { label: 'Latencia promedio', value: summary.avgLatency != null ? summary.avgLatency + ' ms' : '--' },
-    { label: 'Perdida de paquetes', value: (summary.avgLoss ?? 0) + '%' },
-    { label: 'Caidas registradas', value: String(summary.outageCount) },
+    { label: 'Avg. latency', value: summary.avgLatency != null ? summary.avgLatency + ' ms' : '--' },
+    { label: 'Packet loss', value: (summary.avgLoss ?? 0) + '%' },
+    { label: 'Outages logged', value: String(summary.outageCount) },
     {
-      label: 'Frecuencia de caidas',
-      value: summary.avgOutageIntervalMs != null ? `1 cada ${fmtDuration(summary.avgOutageIntervalMs)}` : 'Sin caidas',
+      label: 'Outage frequency',
+      value: summary.avgOutageIntervalMs != null ? `1 every ${fmtDuration(summary.avgOutageIntervalMs)}` : 'No outages',
     },
-    { label: 'Tiempo caido total', value: fmtDuration(summary.totalDowntimeMs) },
-    { label: 'Sin monitorear', value: fmtDuration(summary.noDataMs) },
+    { label: 'Total downtime', value: fmtDuration(summary.totalDowntimeMs) },
+    { label: 'Not monitored', value: fmtDuration(summary.noDataMs) },
   ]);
   if (summary.noDataMs > 0) {
     doc.fontSize(8).fillColor(COLOR.muted).text(
-      '"Sin monitorear" son periodos en que el equipo estaba dormido/apagado y no se pudo verificar la conexion (no cuenta como caida ni como conexion buena).'
+      '"Not monitored" are periods when the machine was asleep/off and the connection could not be checked (counts as neither an outage nor a good connection).'
     );
     doc.moveDown(0.3);
   }
 
-  drawSectionTitle(doc, 'Estado a lo largo del periodo');
+  drawSectionTitle(doc, 'Status over the period');
   doc.fontSize(8).fillColor(COLOR.muted)
-    .text('Verde = conectado   Amarillo = degradado   Rojo = caido   Gris = sin datos (equipo dormido/apagado)');
+    .text('Green = connected   Yellow = degraded   Red = down   Gray = no data (machine asleep/off)');
   doc.moveDown(0.3);
   drawTimelineBar(doc, chartPoints, doc.page.width - doc.page.margins.left * 2, 18);
 
-  drawSectionTitle(doc, 'Latencia (ms)');
+  drawSectionTitle(doc, 'Latency (ms)');
   drawLineChart(doc, chartPoints, doc.page.width - doc.page.margins.left * 2, 90, 'avgMs', COLOR.line, 'ms');
 
-  drawSectionTitle(doc, 'Resumen por dia');
+  drawSectionTitle(doc, 'Daily breakdown');
   drawTable(
     doc,
-    ['Fecha', 'Uptime', 'Latencia prom.', 'Perdida', 'Caidas', 'Tiempo caido', 'Sin datos'],
+    ['Date', 'Uptime', 'Avg. latency', 'Loss', 'Outages', 'Downtime', 'No data'],
     byDay.map((d) => [
       fmtDate(d.key),
       d.uptimePct != null ? d.uptimePct + '%' : '--',
@@ -242,22 +248,22 @@ async function main() {
     [75, 55, 80, 50, 45, 85, 80]
   );
 
-  drawSectionTitle(doc, `Detalle de caidas (${outages.length})`);
+  drawSectionTitle(doc, `Outage detail (${outages.length})`);
   if (outages.length) {
     drawTable(
       doc,
-      ['Inicio', 'Fin', 'Duracion'],
-      outages.map((o) => [fmtDateTime(o.start), o.ongoing ? 'en curso' : fmtDateTime(o.end), fmtDuration(o.durationMs)]),
+      ['Start', 'End', 'Duration'],
+      outages.map((o) => [fmtDateTime(o.start), o.ongoing ? 'ongoing' : fmtDateTime(o.end), fmtDuration(o.durationMs)]),
       [180, 180, 100],
       outages.map((o) => (o.durationMs > 5000 ? COLOR.rowSevere : o.durationMs > 1000 ? COLOR.rowMild : null))
     );
   } else {
-    doc.fontSize(10).fillColor(COLOR.muted).text('No se registraron caidas en este periodo.');
+    doc.fontSize(10).fillColor(COLOR.muted).text('No outages were logged in this period.');
   }
 
   doc.end();
   await new Promise((resolve) => doc.on('end', resolve));
-  console.log(`Reporte generado: ${outPath}`);
+  console.log(`Report generated: ${outPath}`);
 }
 
 main();

@@ -1,54 +1,54 @@
 # Internet Monitor
 
-Monitorea la conexion a internet en segundo plano: hace ping cada ~2s a 1.1.1.1, 8.8.8.8 y 9.9.9.9, revisa resolucion DNS, y guarda historial local de latencia, perdida de paquetes y caidas (hasta las de menos de un segundo). Incluye un dashboard web local con zoom para ver graficas y el registro de caidas.
+Monitors your internet connection in the background: pings 1.1.1.1, 8.8.8.8, and 9.9.9.9 every ~2s, checks DNS resolution, and keeps a local history of latency, packet loss, and outages (down to sub-second precision). Includes a local web dashboard with zoom for charts and the outage log.
 
-Funciona en macOS y Windows (ver abajo).
+Works on macOS and Windows (see below).
 
-## Uso manual (probar sin instalar)
+## Manual use (try it without installing)
 
 ```bash
 npm start
 ```
 
-Luego abre http://localhost:5757
+Then open http://localhost:5757
 
-## Uso en Windows (por ejemplo, en el laptop de un tecnico)
+## Using it on Windows (e.g. on a technician's laptop)
 
-1. Instala [Node.js](https://nodejs.org) (version LTS) si no lo tiene.
-2. Copia toda esta carpeta (por USB o como sea) al equipo Windows.
-3. Haz doble click en `start-windows.bat`. La primera vez instala las dependencias solo si falta la carpeta `node_modules`; despues arranca el monitor.
-4. Deja esa ventana abierta y abre `http://localhost:5757` en el navegador.
+1. Install [Node.js](https://nodejs.org) (LTS version) if you don't have it.
+2. Copy this whole folder (USB, whatever works) to the Windows machine.
+3. Double-click `start-windows.bat`. The first time it installs dependencies only if the `node_modules` folder is missing; after that it just starts the monitor.
+4. Leave that window open and open `http://localhost:5757` in your browser.
 
-Las notificaciones nativas (banner del sistema) solo funcionan en macOS; en Windows el aviso visual/sonoro del propio dashboard (la pantalla que se pone roja cuando se cae) sigue funcionando igual mientras la pagina este abierta.
+Native OS notifications (system banner) only work on macOS; on Windows the dashboard's own visual/sound alert (the screen turning red when it drops) still works the same as long as the page is open.
 
-## Instalar como servicio permanente en macOS (arranca solo, corre siempre)
+## Installing as a permanent service on macOS (auto-starts, always running)
 
 ```bash
 ./scripts/install.sh
 ```
 
-Esto crea un LaunchAgent en `~/Library/LaunchAgents` que arranca el monitor al iniciar sesion y lo reinicia si se cae.
+This creates a LaunchAgent in `~/Library/LaunchAgents` that starts the monitor on login and restarts it if it crashes.
 
-## Desinstalar el servicio
+## Uninstalling the service
 
 ```bash
 ./scripts/uninstall.sh
 ```
 
-## Generar un reporte en PDF (para tu operador de internet)
+## Generating a PDF report (for your ISP)
 
 ```bash
 npm run report
 ```
 
-Genera un PDF con resumen de uptime, grafica de estado/latencia, desglose por dia y el detalle de cada caida (fecha, hora de inicio/fin y duracion), usando los ultimos 7 dias de datos. Queda guardado en `reports/reporte-internet-<fecha>.pdf`.
+Generates a PDF with an uptime summary, status/latency charts, a day-by-day breakdown, and the detail of every outage (date, start/end time, and duration), using the last 7 days of data. Saved to `reports/internet-report-<date>.pdf`.
 
-Para otro periodo o nombre de archivo:
+For a different period or filename:
 
 ```bash
-node scripts/report.js --days=30 --out=reports/mi-reporte.pdf
+node scripts/report.js --days=30 --out=reports/my-report.pdf
 ```
 
-## Datos
+## Data
 
-Los datos se guardan en `data/` (un archivo `.jsonl` por dia, mas `outages.jsonl` con el registro de caidas). Se limpian automaticamente pasados 30 dias.
+Data is stored in `data/` (one `.jsonl` file per day, plus `outages.jsonl` with the outage log). It's cleaned up automatically after 30 days.

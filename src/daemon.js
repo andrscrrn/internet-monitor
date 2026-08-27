@@ -32,7 +32,7 @@ async function tick() {
         state.downNotified = false;
       }
       if (!state.downNotified && sample.t - state.ongoingOutageStart >= CONFIG.notifyMinDurationMs) {
-        notifyIfEnabled('Internet caido', 'La conexion lleva varios segundos caida.');
+        notifyIfEnabled('Internet is down', 'The connection has been down for several seconds.');
         state.downNotified = true;
       }
     } else if (state.ongoingOutageStart) {
@@ -43,7 +43,7 @@ async function tick() {
         durationMs,
       });
       if (durationMs >= CONFIG.notifyMinDurationMs) {
-        notifyIfEnabled('Internet recuperado', `La conexion volvio. Estuvo caida ${fmtDuration(durationMs)}.`);
+        notifyIfEnabled('Internet is back', `The connection is back. It was down for ${fmtDuration(durationMs)}.`);
       }
       state.ongoingOutageStart = null;
       state.downNotified = false;

@@ -38,5 +38,5 @@ PLIST
 launchctl unload "$PLIST_PATH" 2>/dev/null || true
 launchctl load -w "$PLIST_PATH"
 
-echo "Instalado y corriendo. Dashboard: http://localhost:5757"
+echo "Installed and running. Dashboard: http://localhost:5757"
 echo "Plist: $PLIST_PATH"

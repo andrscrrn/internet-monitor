@@ -1,9 +1,10 @@
 {
   "name": "internet-monitor",
   "version": "1.0.0",
-  "description": "Monitorea la conexion a internet: caidas, latencia y perdida de paquetes, con dashboard local.",
+  "description": "Monitors your internet connection: outages, latency, and packet loss, with a local dashboard.",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "start": "node src/main.js",
     "report": "node scripts/report.js"

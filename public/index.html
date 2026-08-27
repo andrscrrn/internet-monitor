@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Monitor de Internet</title>
+<title>Internet Monitor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
@@ -249,16 +249,16 @@
 
 <div class="ambient-alert"></div>
 <div class="outage-flash" id="outageFlash">
-  <div class="outage-flash-text">⚠ SE CAYO EL INTERNET ⚠
+  <div class="outage-flash-text">⚠ INTERNET IS DOWN ⚠
     <div class="outage-flash-timer" id="outageFlashTimer">0:00</div>
   </div>
 </div>
-<div class="recovered-flash" id="recoveredFlash"><div class="recovered-flash-text">✓ Conexion recuperada</div></div>
+<div class="recovered-flash" id="recoveredFlash"><div class="recovered-flash-text">✓ Connection restored</div></div>
 
 <header>
   <div>
-    <h1>Monitor de Internet</h1>
-    <div class="sub" id="lastUpdated">cargando...</div>
+    <h1>Internet Monitor</h1>
+    <div class="sub" id="lastUpdated">loading...</div>
   </div>
   <div class="status-card">
     <div class="dot" id="statusDot"></div>
@@ -273,7 +273,7 @@
       <div class="status-detail" id="sinceOutageDetail">--</div>
     </div>
   </div>
-  <button id="soundToggle" class="sound-toggle" title="Activar/desactivar sonido de alerta">🔊 Sonido</button>
+  <button id="soundToggle" class="sound-toggle" title="Turn the alert sound on/off">🔊 Sound</button>
 </header>
 
 <div class="ranges" id="ranges">
@@ -287,26 +287,26 @@
 
 <div class="zoom-indicator" id="zoomIndicator" style="display:none;">
   <span>Zoom: <strong id="zoomLabel"></strong></span>
-  <button id="zoomReset">Volver</button>
+  <button id="zoomReset">Back</button>
 </div>
 
 <div class="cards">
   <div class="card"><div class="value" id="cUptime">--</div><div class="label">Uptime</div></div>
-  <div class="card"><div class="value" id="cLatency">--</div><div class="label">Latencia promedio</div></div>
-  <div class="card"><div class="value" id="cLoss">--</div><div class="label">Perdida de paquetes</div></div>
-  <div class="card"><div class="value" id="cDowntime">--</div><div class="label">Tiempo caido</div></div>
-  <div class="card"><div class="value" id="cOutages">--</div><div class="label">Caidas registradas</div></div>
-  <div class="card"><div class="value" id="cFrequency">--</div><div class="label">Frecuencia de caidas</div></div>
-  <div class="card"><div class="value" id="cNoData">--</div><div class="label">Sin monitorear</div></div>
+  <div class="card"><div class="value" id="cLatency">--</div><div class="label">Avg. latency</div></div>
+  <div class="card"><div class="value" id="cLoss">--</div><div class="label">Packet loss</div></div>
+  <div class="card"><div class="value" id="cDowntime">--</div><div class="label">Downtime</div></div>
+  <div class="card"><div class="value" id="cOutages">--</div><div class="label">Outages logged</div></div>
+  <div class="card"><div class="value" id="cFrequency">--</div><div class="label">Outage frequency</div></div>
+  <div class="card"><div class="value" id="cNoData">--</div><div class="label">Not monitored</div></div>
 </div>
 
 <div class="panel">
-  <h2>Estado a lo largo del tiempo</h2>
+  <h2>Status over time</h2>
   <div class="legend">
-    <span><i class="sw" style="background:var(--up)"></i>Conectado</span>
-    <span><i class="sw" style="background:var(--degraded)"></i>Degradado</span>
-    <span><i class="sw" style="background:var(--down)"></i>Caido</span>
-    <span><i class="sw" style="background:var(--nodata)"></i>Sin datos (equipo dormido/apagado)</span>
+    <span><i class="sw" style="background:var(--up)"></i>Connected</span>
+    <span><i class="sw" style="background:var(--degraded)"></i>Degraded</span>
+    <span><i class="sw" style="background:var(--down)"></i>Down</span>
+    <span><i class="sw" style="background:var(--nodata)"></i>No data (machine asleep/off)</span>
   </div>
   <div class="timeline-wrap" id="timelineWrap">
     <canvas id="timeline" height="28"></canvas>
@@ -317,21 +317,21 @@
     <span id="axisMid">--</span>
     <span id="axisEnd">--</span>
   </div>
-  <div class="timeline-hint">Arrastra sobre la barra para hacer zoom a ese tramo</div>
+  <div class="timeline-hint">Drag over the bar to zoom into that stretch</div>
 </div>
 
 <div class="panel">
-  <h2>Latencia (ms)</h2>
+  <h2>Latency (ms)</h2>
   <canvas id="latencyChart" height="140"></canvas>
 </div>
 
 <div class="panel">
-  <h2>Perdida de paquetes (%)</h2>
+  <h2>Packet loss (%)</h2>
   <canvas id="lossChart" height="100"></canvas>
 </div>
 
 <div class="panel">
-  <h2>Caidas registradas</h2>
+  <h2>Outages logged</h2>
   <div id="outagesTable"></div>
 </div>
 
@@ -432,7 +432,7 @@ function pad2(n) {
 function fmtTime(ts) {
   const d = new Date(ts);
   const date = `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`;
-  const time = d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   return `${date}, ${time}`;
 }
 function fmtDuration(ms) {
@@ -488,7 +488,7 @@ function drawLineChart(canvas, points, key, color, unit) {
   if (!values.length) {
     ctx.fillStyle = muted;
     ctx.font = '12px sans-serif';
-    ctx.fillText('sin datos', 4, h / 2);
+    ctx.fillText('no data', 4, h / 2);
     return;
   }
   const max = Math.max(...values, unit === '%' ? 10 : 50);
@@ -529,7 +529,7 @@ const outageDetailCache = new Map();
 const expandedOutages = new Set();
 
 function fmtTimeSec(ts) {
-  return new Date(ts).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+  return new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
 }
 
 function renderDetailRow(colSpan, key, o) {
@@ -537,30 +537,30 @@ function renderDetailRow(colSpan, key, o) {
   const samples = outageDetailCache.get(key);
   if (samples === undefined) return '';
   if (samples === null) {
-    return `<tr class="detail-row"><td colspan="${colSpan}">Cargando detalle...</td></tr>`;
+    return `<tr class="detail-row"><td colspan="${colSpan}">Loading detail...</td></tr>`;
   }
   if (!samples.length) {
-    return `<tr class="detail-row"><td colspan="${colSpan}">Sin muestras cerca de este rango.</td></tr>`;
+    return `<tr class="detail-row"><td colspan="${colSpan}">No samples near this window.</td></tr>`;
   }
   const hosts = samples[0].results.map((r) => r.host);
   const rows = samples
     .map((s) => {
       const inWindow = s.t >= o.start && s.t < o.end;
       const cells = s.results
-        .map((r) => (r.alive ? `${r.ms}ms` : '<span class="fail">sin respuesta</span>'))
+        .map((r) => (r.alive ? `${r.ms}ms` : '<span class="fail">no response</span>'))
         .map((c) => `<td>${c}</td>`)
         .join('');
       return `<tr class="${inWindow ? 'in-outage' : ''}">
         <td>${fmtTimeSec(s.t)}</td>
         ${cells}
-        <td>${s.dnsOk ? 'ok' : '<span class="fail">falla</span>'}</td>
+        <td>${s.dnsOk ? 'ok' : '<span class="fail">fail</span>'}</td>
       </tr>`;
     })
     .join('');
   return `<tr class="detail-row"><td colspan="${colSpan}">
-    <div class="detail-note">Chequeos alrededor de esta caida (fuera de la franja roja = antes/despues, no es parte de la caida):</div>
+    <div class="detail-note">Checks around this outage (outside the red band = before/after, not part of the outage):</div>
     <table class="detail-table">
-      <thead><tr><th>Hora</th>${hosts.map((h) => `<th>${h}</th>`).join('')}<th>DNS</th></tr></thead>
+      <thead><tr><th>Time</th>${hosts.map((h) => `<th>${h}</th>`).join('')}<th>DNS</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div></td></tr>`;
@@ -586,7 +586,7 @@ function renderOutages(outages) {
   lastOutages = outages;
   const el = document.getElementById('outagesTable');
   if (!outages.length) {
-    el.innerHTML = '<div class="empty">Sin caidas registradas en este rango.</div>';
+    el.innerHTML = '<div class="empty">No outages logged in this range.</div>';
     return;
   }
   const colSpan = 3;
@@ -599,14 +599,14 @@ function renderOutages(outages) {
       const expanded = expandedOutages.has(key);
       const mainRow = `<tr class="${severity} clickable" onclick="toggleOutage('${key}', ${o.start}, ${o.end})">
         <td>${expanded ? '▾' : '▸'} ${fmtTime(o.start)}</td>
-        <td>${o.ongoing ? '<span class="pill ongoing">en curso</span>' : fmtTime(o.end)}</td>
+        <td>${o.ongoing ? '<span class="pill ongoing">ongoing</span>' : fmtTime(o.end)}</td>
         <td>${fmtDuration(o.durationMs)}</td>
       </tr>`;
       return mainRow + renderDetailRow(colSpan, key, o);
     })
     .join('');
   el.innerHTML = `<table>
-    <thead><tr><th>Inicio</th><th>Fin</th><th>Duracion</th></tr></thead>
+    <thead><tr><th>Start</th><th>End</th><th>Duration</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
@@ -622,7 +622,7 @@ let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 
 function updateSoundToggleButton() {
   const btn = document.getElementById('soundToggle');
-  btn.textContent = soundEnabled ? '🔊 Sonido: ACTIVADO' : '🔇 Sonido: DESACTIVADO';
+  btn.textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
   btn.classList.toggle('sound-on', soundEnabled);
   btn.classList.toggle('sound-off', !soundEnabled);
 }
@@ -746,37 +746,37 @@ function renderStatus(status) {
   const detail = document.getElementById('statusDetail');
   const last = status.lastSample;
   if (!last) {
-    label.textContent = 'Sin datos aun';
+    label.textContent = 'No data yet';
     return;
   }
-  const map = { up: 'Conectado', degraded: 'Degradado', down: 'Caido' };
+  const map = { up: 'Connected', degraded: 'Degraded', down: 'Down' };
   dot.className = 'dot ' + last.status;
   label.textContent = map[last.status] || last.status;
   const parts = [];
   if (last.avgMs != null) parts.push(`${last.avgMs} ms`);
-  if (last.lossPct) parts.push(`${last.lossPct}% perdida`);
-  parts.push(last.dnsOk ? 'DNS ok' : 'DNS falla');
+  if (last.lossPct) parts.push(`${last.lossPct}% loss`);
+  parts.push(last.dnsOk ? 'DNS ok' : 'DNS fail');
   detail.textContent = parts.join(' - ');
   document.getElementById('lastUpdated').textContent =
-    'Ultimo chequeo: ' + fmtTime(last.t);
+    'Last check: ' + fmtTime(last.t);
 
   const sinceEl = document.getElementById('sinceOutageLabel');
   const sinceDetailEl = document.getElementById('sinceOutageDetail');
   if (status.ongoingOutageStart) {
     sinceOutageEndBaseline = null;
-    sinceEl.textContent = 'Caida en curso';
+    sinceEl.textContent = 'Outage in progress';
     sinceEl.style.color = 'var(--down)';
-    sinceDetailEl.textContent = 'desde ' + fmtTime(status.ongoingOutageStart);
+    sinceDetailEl.textContent = 'since ' + fmtTime(status.ongoingOutageStart);
   } else if (status.lastOutageEnd) {
     sinceOutageEndBaseline = status.lastOutageEnd;
     sinceEl.style.color = '';
-    sinceDetailEl.textContent = 'sin caidas (desde ' + fmtTime(status.lastOutageEnd) + ')';
+    sinceDetailEl.textContent = 'no outages (since ' + fmtTime(status.lastOutageEnd) + ')';
     updateSinceOutageDisplay();
   } else {
     sinceOutageEndBaseline = null;
-    sinceEl.textContent = 'Sin caidas registradas';
+    sinceEl.textContent = 'No outages logged';
     sinceEl.style.color = '';
-    sinceDetailEl.textContent = 'desde que inicio el monitoreo';
+    sinceDetailEl.textContent = 'since monitoring started';
   }
 }
 
@@ -790,7 +790,7 @@ function renderSummary(summary) {
   document.getElementById('cDowntime').textContent = fmtDuration(summary.totalDowntimeMs);
   document.getElementById('cOutages').textContent = summary.outageCount;
   document.getElementById('cFrequency').textContent =
-    summary.avgOutageIntervalMs != null ? `1 cada ${fmtDuration(summary.avgOutageIntervalMs)}` : 'Sin caidas';
+    summary.avgOutageIntervalMs != null ? `1 every ${fmtDuration(summary.avgOutageIntervalMs)}` : 'No outages';
   document.getElementById('cNoData').textContent = fmtDuration(summary.noDataMs);
 }
 
@@ -885,7 +885,7 @@ window.addEventListener('mouseup', (e) => {
 setActiveRangeButton(customZoom ? null : currentRange);
 renderZoomIndicator();
 
-// Poll fast while a caida is actively in progress, so the big overlay's
+// Poll fast while an outage is actively in progress, so the big overlay's
 // timer and the moment it hides both track reality closely; back off to a
 // normal pace once things are calm again.
 function scheduleNextRefresh() {
