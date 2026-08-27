@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Internet Monitor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" id="favicon" href="data:,">
 <style>
   :root {
     --bg: #f4f5f7;
@@ -765,8 +766,25 @@ function updateSinceOutageDisplay() {
   sinceEl.textContent = fmtDuration(Date.now() - sinceOutageEndBaseline);
 }
 
+// The tab icon doubles as a status light, visible even when the tab isn't.
+let lastFaviconStatus = null;
+function updateFavicon(statusKey) {
+  if (statusKey === lastFaviconStatus) return;
+  lastFaviconStatus = statusKey;
+  const colors = currentColors();
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const ctx = c.getContext('2d');
+  ctx.beginPath();
+  ctx.arc(16, 16, 13, 0, Math.PI * 2);
+  ctx.fillStyle = colors[statusKey] || colors.nodata;
+  ctx.fill();
+  document.getElementById('favicon').href = c.toDataURL('image/png');
+}
+
 function renderStatus(status) {
   trackOutageTransitions(status);
+  updateFavicon(status.lastSample ? status.lastSample.status : 'nodata');
   const dot = document.getElementById('statusDot');
   const label = document.getElementById('statusLabel');
   const detail = document.getElementById('statusDetail');
