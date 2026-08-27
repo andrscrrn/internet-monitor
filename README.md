@@ -40,6 +40,18 @@ For a different period or filename:
 node scripts/report.js --days=30 --out=reports/my-report.pdf
 ```
 
+## Configuration
+
+Defaults live in `src/config.js`. To override any of them without touching source, create a `config.json` at the project root (it's gitignored), e.g.:
+
+```json
+{
+  "port": 6060,
+  "targets": ["1.1.1.1", "8.8.8.8"],
+  "degradedLatencyMs": 200
+}
+```
+
 ## Data
 
 Data is stored in `data/` (one `.jsonl` file per day, plus `outages.jsonl` with the outage log). It's cleaned up automatically after 30 days.

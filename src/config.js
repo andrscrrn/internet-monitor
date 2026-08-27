@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,7 +10,7 @@ export const STATE_FILE = path.join(DATA_DIR, 'state.json');
 export const OUTAGES_FILE = path.join(DATA_DIR, 'outages.jsonl');
 export const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 
-export const CONFIG = {
+const DEFAULTS = {
   targets: ['1.1.1.1', '8.8.8.8', '9.9.9.9'],
   dnsCheckHost: 'google.com',
   intervalMs: 2_000,
@@ -27,3 +28,25 @@ export const CONFIG = {
   port: 5757,
   retentionDays: 30,
 };
+
+// Optional overrides from config.json at the project root, so tweaking the
+// port, targets or thresholds doesn't require editing source. Unknown keys
+// are rejected loudly to catch typos.
+function loadOverrides() {
+  const file = path.join(ROOT_DIR, 'config.json');
+  let raw;
+  try {
+    raw = fs.readFileSync(file, 'utf8');
+  } catch {
+    return {};
+  }
+  const overrides = JSON.parse(raw); // a malformed config.json should fail loudly, not be ignored
+  for (const key of Object.keys(overrides)) {
+    if (!(key in DEFAULTS)) {
+      throw new Error(`config.json: unknown option "${key}" (valid: ${Object.keys(DEFAULTS).join(', ')})`);
+    }
+  }
+  return overrides;
+}
+
+export const CONFIG = { ...DEFAULTS, ...loadOverrides() };

@@ -1,5 +1,6 @@
 data/
 reports/
+config.json
 *.log
 node_modules/
 .claude/
