@@ -16,6 +16,13 @@ export const CONFIG = {
   pingTimeoutSec: 1,
   degradedLatencyMs: 150,
   notifyMinDurationMs: 5_000,
+  // A gap between samples larger than this means no checks ran (machine
+  // asleep/off or the process was stopped) — that time is "not monitored",
+  // never outage time.
+  sleepGapMs: 30_000,
+  // Right after waking, the network stack takes a few seconds to reconnect;
+  // don't log those first failed checks as an outage.
+  wakeGraceMs: 15_000,
   notificationsEnabled: true,
   port: 5757,
   retentionDays: 30,
