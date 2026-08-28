@@ -29,6 +29,8 @@ Native OS notifications (system banner) only work on macOS; on Windows the dashb
 
 This creates a LaunchAgent in `~/Library/LaunchAgents` that starts the monitor on login and restarts it if it crashes.
 
+On every start the service first does a `git pull` (and an `npm install` if the lockfile changed) so it always runs the latest pushed version. If the pull fails — no network yet at login, for example — it just starts the current version.
+
 ## Uninstalling the service
 
 ```bash
@@ -47,6 +49,18 @@ For a different period or filename:
 
 ```bash
 node scripts/report.js --days=30 --out=reports/my-report.pdf
+```
+
+## Configuration
+
+Defaults live in `src/config.js`. To override any of them without touching source, create a `config.json` at the project root (it's gitignored), e.g.:
+
+```json
+{
+  "port": 6060,
+  "targets": ["1.1.1.1", "8.8.8.8"],
+  "degradedLatencyMs": 200
+}
 ```
 
 ## Data

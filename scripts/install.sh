@@ -18,9 +18,14 @@ cat > "$PLIST_PATH" <<PLIST
   <string>${LABEL}</string>
   <key>ProgramArguments</key>
   <array>
-    <string>${NODE_PATH}</string>
-    <string>${PROJECT_DIR}/src/main.js</string>
+    <string>/bin/bash</string>
+    <string>${PROJECT_DIR}/scripts/start.sh</string>
   </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>NODE_BIN</key>
+    <string>${NODE_PATH}</string>
+  </dict>
   <key>WorkingDirectory</key>
   <string>${PROJECT_DIR}</string>
   <key>RunAtLoad</key>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Internet Monitor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" id="favicon" href="data:,">
 <style>
   :root {
     --bg: #f4f5f7;
@@ -766,8 +767,25 @@ function updateSinceOutageDisplay() {
   sinceEl.textContent = fmtDuration(Date.now() - sinceOutageEndBaseline);
 }
 
+// The tab icon doubles as a status light, visible even when the tab isn't.
+let lastFaviconStatus = null;
+function updateFavicon(statusKey) {
+  if (statusKey === lastFaviconStatus) return;
+  lastFaviconStatus = statusKey;
+  const colors = currentColors();
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const ctx = c.getContext('2d');
+  ctx.beginPath();
+  ctx.arc(16, 16, 13, 0, Math.PI * 2);
+  ctx.fillStyle = colors[statusKey] || colors.nodata;
+  ctx.fill();
+  document.getElementById('favicon').href = c.toDataURL('image/png');
+}
+
 function renderStatus(status) {
   trackOutageTransitions(status);
+  updateFavicon(status.lastSample ? status.lastSample.status : 'nodata');
   const dot = document.getElementById('statusDot');
   const label = document.getElementById('statusLabel');
   const detail = document.getElementById('statusDetail');
@@ -935,19 +953,26 @@ renderZoomIndicator();
 
 // Poll fast while an outage is actively in progress, so the big overlay's
 // timer and the moment it hides both track reality closely; back off to a
-// normal pace once things are calm again.
+// normal pace once things are calm again. A failed refresh (server restart,
+// dropped connection) must never kill the loop — this page's whole job is to
+// keep watching.
 function scheduleNextRefresh() {
   const delay = lastKnownOngoingStart ? 1_000 : 3_000;
   setTimeout(async () => {
-    await refresh();
+    try {
+      await refresh();
+    } catch (err) {
+      console.error('refresh failed', err);
+    }
     scheduleNextRefresh();
   }, delay);
 }
-refresh().then(scheduleNextRefresh);
+refresh().catch((err) => console.error('refresh failed', err)).then(scheduleNextRefresh);
 
 setInterval(updateSinceOutageDisplay, 1_000);
-window.addEventListener('resize', refresh);
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refresh);
+// Neither needs new data — the points are already in memory; just redraw.
+window.addEventListener('resize', redrawCharts);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawCharts);
 </script>
 </body>
 </html>

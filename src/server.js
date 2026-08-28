@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { CONFIG, PUBLIC_DIR } from './config.js';
-import { readSamplesInRange, readOutagesInRange, readLastOutage, loadState } from './store.js';
+import { readSamplesInRange, readSeriesInRange, readOutagesInRange, readLastOutage, loadState } from './store.js';
 import { rangeMs, bucketMs, bucketMsForWindow, bucketSamples, summarize } from './aggregate.js';
 
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css' };
@@ -73,8 +73,12 @@ export function startServer() {
 
     if (url.pathname === '/api/history') {
       const { start, end, bucketSizeMs } = resolveWindow(url, now);
-      const samples = readSamplesInRange(start, end);
-      const bucketed = bucketSamples(samples, bucketSizeMs, start, end);
+      const samples = readSeriesInRange(start, end);
+      // Past days are served as per-minute aggregates, so a finer bucket
+      // than 1 minute would just leave empty buckets between points.
+      const todayStart = new Date(now).setHours(0, 0, 0, 0);
+      const effBucketMs = start < todayStart ? Math.max(bucketSizeMs, 60_000) : bucketSizeMs;
+      const bucketed = bucketSamples(samples, effBucketMs, start, end);
       sendJson(res, { start, end, points: bucketed });
       return;
     }
@@ -101,7 +105,7 @@ export function startServer() {
 
     if (url.pathname === '/api/summary') {
       const { start, end } = resolveWindow(url, now);
-      const samples = readSamplesInRange(start, end);
+      const samples = readSeriesInRange(start, end);
       const outages = outagesWithOngoing(start, end, now);
       sendJson(res, { start, end, ...summarize(samples, outages, start, end) });
       return;
@@ -116,7 +120,7 @@ export function startServer() {
     res.end('Not found');
   });
 
-  server.listen(CONFIG.port, () => {
+  server.listen(CONFIG.port, CONFIG.host, () => {
     console.log(`Dashboard: http://localhost:${CONFIG.port}`);
   });
 

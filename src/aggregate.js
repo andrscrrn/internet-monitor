@@ -36,6 +36,45 @@ export function bucketMsForWindow(durationMs) {
 
 const STATUS_RANK = { up: 0, degraded: 1, down: 2 };
 
+// A "point" here is either a raw sample ({t, status, avgMs, lossPct}) or a
+// pre-aggregated minute bucket ({t, spanMs, n, down, latSum, latN, lossSum,
+// status}) produced by aggregateToMinutes. This normalizes both shapes into
+// the same weighted accumulator form so every function below can mix them.
+function weighted(s) {
+  const n = s.n ?? 1;
+  return {
+    n,
+    down: s.down ?? (s.status === 'down' ? 1 : 0),
+    latSum: s.latSum ?? (s.avgMs ?? 0),
+    latN: s.latN ?? (s.avgMs != null ? 1 : 0),
+    lossSum: s.lossSum ?? (s.lossPct ?? 0),
+  };
+}
+
+// Collapse raw samples into per-minute buckets that keep enough sums to
+// reproduce exact summaries later (uptime, latency, loss) without the raw
+// data. Used to persist closed days in compact form.
+export function aggregateToMinutes(samples) {
+  const buckets = new Map();
+  for (const s of samples) {
+    const t = Math.floor(s.t / 60_000) * 60_000;
+    let b = buckets.get(t);
+    if (!b) {
+      b = { t, spanMs: 60_000, n: 0, down: 0, latSum: 0, latN: 0, lossSum: 0, status: 'up' };
+      buckets.set(t, b);
+    }
+    b.n++;
+    if (s.status === 'down') b.down++;
+    if (s.avgMs != null) {
+      b.latSum += s.avgMs;
+      b.latN++;
+    }
+    b.lossSum += s.lossPct ?? 0;
+    if (STATUS_RANK[s.status] > STATUS_RANK[b.status]) b.status = s.status;
+  }
+  return [...buckets.values()].sort((a, b) => a.t - b.t);
+}
+
 export function bucketSamples(samples, bucketSizeMs, rangeStart, rangeEnd) {
   const groups = new Map();
   for (const s of samples) {
@@ -54,50 +93,52 @@ export function bucketSamples(samples, bucketSizeMs, rangeStart, rangeEnd) {
       out.push({ t, avgMs: null, lossPct: null, status: 'nodata', samples: 0 });
       continue;
     }
-    const latencies = group.map((s) => s.avgMs).filter((v) => v != null);
-    const avgMs = latencies.length
-      ? Math.round((latencies.reduce((a, b) => a + b, 0) / latencies.length) * 10) / 10
-      : null;
-    const avgLoss = Math.round(
-      group.reduce((a, s) => a + s.lossPct, 0) / group.length
-    );
+    let n = 0, latSum = 0, latN = 0, lossSum = 0;
     let worst = 'up';
     for (const s of group) {
+      const w = weighted(s);
+      n += w.n;
+      latSum += w.latSum;
+      latN += w.latN;
+      lossSum += w.lossSum;
       if (STATUS_RANK[s.status] > STATUS_RANK[worst]) worst = s.status;
     }
-    out.push({ t, avgMs, lossPct: avgLoss, status: worst, samples: group.length });
+    const avgMs = latN ? Math.round((latSum / latN) * 10) / 10 : null;
+    const avgLoss = Math.round(lossSum / n);
+    out.push({ t, avgMs, lossPct: avgLoss, status: worst, samples: n });
   }
   return out;
 }
 
 // Time within [rangeStart, rangeEnd] where no checks ran at all (e.g. the
 // machine was asleep) — a gap much larger than the normal check interval.
+// Minute-aggregate points cover a span, so the gap is measured from the end
+// of the previous point's span, not its start.
 export function computeNoDataMs(samples, rangeStart, rangeEnd) {
   const gapThreshold = CONFIG.intervalMs * 2;
   let noData = 0;
-  let prev = rangeStart;
+  let prevEnd = rangeStart;
   for (const s of samples) {
-    if (s.t - prev > gapThreshold) noData += s.t - prev;
-    prev = s.t;
+    if (s.t - prevEnd > gapThreshold) noData += s.t - prevEnd;
+    prevEnd = Math.max(prevEnd, s.t + (s.spanMs ?? 0));
   }
-  if (rangeEnd - prev > gapThreshold) noData += rangeEnd - prev;
+  if (rangeEnd - prevEnd > gapThreshold) noData += rangeEnd - prevEnd;
   return noData;
 }
 
 export function summarize(samples, outages, rangeStart, rangeEnd) {
-  const total = samples.length;
-  const downSamples = samples.filter((s) => s.status === 'down').length;
-  const upOrDegraded = total - downSamples;
-  const uptimePct = total ? Math.round((upOrDegraded / total) * 1000) / 10 : null;
-
-  const latencies = samples.map((s) => s.avgMs).filter((v) => v != null);
-  const avgLatency = latencies.length
-    ? Math.round((latencies.reduce((a, b) => a + b, 0) / latencies.length) * 10) / 10
-    : null;
-
-  const avgLoss = total
-    ? Math.round(samples.reduce((a, s) => a + s.lossPct, 0) / total)
-    : null;
+  let total = 0, down = 0, latSum = 0, latN = 0, lossSum = 0;
+  for (const s of samples) {
+    const w = weighted(s);
+    total += w.n;
+    down += w.down;
+    latSum += w.latSum;
+    latN += w.latN;
+    lossSum += w.lossSum;
+  }
+  const uptimePct = total ? Math.round(((total - down) / total) * 1000) / 10 : null;
+  const avgLatency = latN ? Math.round((latSum / latN) * 10) / 10 : null;
+  const avgLoss = total ? Math.round(lossSum / total) : null;
 
   const totalDowntimeMs = outages.reduce((a, o) => a + o.durationMs, 0);
   const noDataMs =
