@@ -10,9 +10,25 @@ cd "$PROJECT_DIR"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 NODE_BIN="${NODE_BIN:-$(command -v node)}"
 
-# Best effort: at login the network may not be up yet, SSH may not be able to
-# authenticate non-interactively, or local edits may block the merge. None of
-# that should ever stop the monitor from starting with the current version.
+# Right after boot/login, Wi-Fi and DNS often aren't up yet, so an immediate
+# git pull would just fail. Give the network up to WAIT_TIMEOUT seconds to
+# come up (checking every 2s) before attempting the pull at all — but never
+# hold up the monitor itself: if it's still not up by then, move on and start
+# with whatever's already on disk.
+WAIT_TIMEOUT=60
+waited=0
+while ! ping -c 1 -t 2 github.com >/dev/null 2>&1; do
+  if [ "$waited" -ge "$WAIT_TIMEOUT" ]; then
+    echo "[start] no network after ${WAIT_TIMEOUT}s; starting the current version" >&2
+    break
+  fi
+  sleep 2
+  waited=$((waited + 2))
+done
+
+# Best effort beyond this point too: SSH may not be able to authenticate
+# non-interactively, or local edits may block the merge. None of that should
+# ever stop the monitor from starting with the current version.
 if GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10" git pull --ff-only; then
   NPM_BIN="$(dirname "$NODE_BIN")/npm"
   HASH_FILE="node_modules/.package-lock.hash"
