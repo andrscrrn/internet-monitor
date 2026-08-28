@@ -18,7 +18,11 @@ if GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10" git pull --ff-onl
   HASH_FILE="node_modules/.package-lock.hash"
   LOCK_HASH="$(shasum package-lock.json | cut -d' ' -f1)"
   if [ ! -d node_modules ] || [ "$(cat "$HASH_FILE" 2>/dev/null)" != "$LOCK_HASH" ]; then
-    "$NPM_BIN" install --no-audit --no-fund && echo "$LOCK_HASH" > "$HASH_FILE"
+    # Invoke npm's script via $NODE_BIN directly rather than executing it: npm's
+    # bin file has a "#!/usr/bin/env node" shebang, and launchd's minimal PATH
+    # (even with the prepend above) often doesn't contain a version-managed
+    # node install (nvm, etc.), so plain `env node` resolution fails there.
+    "$NODE_BIN" "$NPM_BIN" install --no-audit --no-fund && echo "$LOCK_HASH" > "$HASH_FILE"
   fi
 else
   echo "[start] git pull failed; starting the current version" >&2
