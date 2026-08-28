@@ -2,7 +2,7 @@
 
 Monitors your internet connection in the background: pings 1.1.1.1, 8.8.8.8, and 9.9.9.9 every ~2s, checks DNS resolution, and keeps a local history of latency, packet loss, and outages (down to sub-second precision). Includes a local web dashboard with zoom for charts and the outage log.
 
-Works on macOS and Windows (see below).
+macOS only.
 
 ## Manual use (try it without installing)
 
@@ -12,16 +12,7 @@ npm start
 
 Then open http://localhost:5757
 
-## Using it on Windows (e.g. on a technician's laptop)
-
-1. Install [Node.js](https://nodejs.org) (LTS version) if you don't have it.
-2. Copy this whole folder (USB, whatever works) to the Windows machine.
-3. Double-click `start-windows.bat`. The first time it installs dependencies only if the `node_modules` folder is missing; after that it just starts the monitor.
-4. Leave that window open and open `http://localhost:5757` in your browser.
-
-Native OS notifications (system banner) only work on macOS; on Windows the dashboard's own visual/sound alert (the screen turning red when it drops) still works the same as long as the page is open.
-
-## Installing as a permanent service on macOS (auto-starts, always running)
+## Installing as a permanent service (auto-starts, always running)
 
 ```bash
 ./scripts/install.sh

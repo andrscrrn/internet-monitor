@@ -1,26 +1,15 @@
 import { execFile } from 'node:child_process';
 import dns from 'node:dns';
 
-const IS_WINDOWS = process.platform === 'win32';
-
-function pingArgs(host, timeoutSec) {
-  if (IS_WINDOWS) {
-    // -n 1: one echo request. -w: per-reply timeout in milliseconds.
-    return ['-n', '1', '-w', String(timeoutSec * 1000), host];
-  }
-  // -c 1: one echo request. -t: overall timeout in seconds (macOS/BSD ping).
-  return ['-c', '1', '-t', String(timeoutSec), host];
-}
-
 function pingOnce(host, timeoutSec) {
   return new Promise((resolve) => {
     execFile(
       'ping',
-      pingArgs(host, timeoutSec),
+      // -c 1: one echo request. -t: overall timeout in seconds (macOS/BSD ping).
+      ['-c', '1', '-t', String(timeoutSec), host],
       { timeout: (timeoutSec + 2) * 1000 },
       (err, stdout) => {
-        // Matches "time=12.345 ms" (macOS), "time=5ms" and "time<1ms" (Windows).
-        const match = /time[=<]([\d.]+)\s*ms/i.exec(stdout || '');
+        const match = /time=([\d.]+)\s*ms/i.exec(stdout || '');
         if (match) {
           resolve({ host, alive: true, ms: parseFloat(match[1]) });
         } else {
