@@ -288,6 +288,7 @@
   <button data-range="30m">30m</button>
   <button data-range="1h">1h</button>
   <button data-range="6h">6h</button>
+  <button data-range="12h">12h</button>
   <button data-range="24h" class="active">24h</button>
   <button data-range="7d">7d</button>
 </div>
@@ -363,7 +364,7 @@ function currentColors() {
     nodata: cssVar('--nodata'),
   };
 }
-const VALID_RANGES = ['15m', '30m', '1h', '6h', '24h', '7d'];
+const VALID_RANGES = ['15m', '30m', '1h', '6h', '12h', '24h', '7d'];
 
 function rangeFromUrl() {
   const requested = new URLSearchParams(location.search).get('range');
