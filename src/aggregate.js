@@ -111,7 +111,7 @@ export function bucketSamples(samples, bucketSizeMs, rangeStart, rangeEnd) {
 }
 
 // Time within [rangeStart, rangeEnd] where no checks ran at all (e.g. the
-// machine was asleep) — a gap much larger than the normal check interval.
+// machine was asleep): a gap much larger than the normal check interval.
 // Minute-aggregate points cover a span, so the gap is measured from the end
 // of the previous point's span, not its start.
 export function computeNoDataMs(samples, rangeStart, rangeEnd) {

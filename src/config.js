@@ -18,7 +18,7 @@ const DEFAULTS = {
   degradedLatencyMs: 150,
   notifyMinDurationMs: 5_000,
   // A gap between samples larger than this means no checks ran (machine
-  // asleep/off or the process was stopped) — that time is "not monitored",
+  // asleep/off or the process was stopped): that time is "not monitored",
   // never outage time.
   sleepGapMs: 30_000,
   // Right after waking, the network stack takes a few seconds to reconnect;

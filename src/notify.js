@@ -18,7 +18,7 @@ export function notify(title, message, { sound = 'Basso' } = {}) {
     });
     return;
   }
-  // Fallback that ships with macOS — no extra install needed.
+  // Fallback that ships with macOS; no extra install needed.
   const script =
     `display notification "${escapeAppleScript(message)}" ` +
     `with title "${escapeAppleScript(title)}"` +

@@ -750,7 +750,7 @@ function trackOutageTransitions(status) {
     hideOutageFlash();
     triggerRecoveredFlash();
   } else if (!ongoing && lastEnd && lastEnd !== lastKnownOutageEnd && lastEnd !== lastKnownOngoingStart) {
-    // Started and ended between two polls — we never saw it "ongoing" live, so no live timer to show.
+    // Started and ended between two polls; we never saw it "ongoing" live, so no live timer to show.
     triggerOutageFlash(null);
     setTimeout(triggerRecoveredFlash, 900);
   }
@@ -941,7 +941,7 @@ window.addEventListener('mouseup', (e) => {
   const endX = e.clientX;
   dragStartX = null;
   zoomSelectionEl.style.display = 'none';
-  if (Math.abs(endX - startX) < 6) return; // too small — treat as a stray click
+  if (Math.abs(endX - startX) < 6) return; // too small; treat as a stray click
   const t1 = pixelToTime(Math.min(startX, endX));
   const t2 = pixelToTime(Math.max(startX, endX));
   if (t2 - t1 < 1000) return; // ignore sub-second selections
@@ -954,7 +954,7 @@ renderZoomIndicator();
 // Poll fast while an outage is actively in progress, so the big overlay's
 // timer and the moment it hides both track reality closely; back off to a
 // normal pace once things are calm again. A failed refresh (server restart,
-// dropped connection) must never kill the loop — this page's whole job is to
+// dropped connection) must never kill the loop: this page's whole job is to
 // keep watching.
 function scheduleNextRefresh() {
   const delay = lastKnownOngoingStart ? 1_000 : 3_000;
@@ -970,7 +970,7 @@ function scheduleNextRefresh() {
 refresh().catch((err) => console.error('refresh failed', err)).then(scheduleNextRefresh);
 
 setInterval(updateSinceOutageDisplay, 1_000);
-// Neither needs new data — the points are already in memory; just redraw.
+// Neither needs new data: the points are already in memory; just redraw.
 window.addEventListener('resize', redrawCharts);
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawCharts);
 </script>

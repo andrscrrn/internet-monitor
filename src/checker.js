@@ -85,7 +85,7 @@ export async function runCheck(config) {
   prevPartialLoss = partialLoss;
 
   // Pings reaching raw IPs while DNS fails means the connection is unusable
-  // for normal browsing — that's degraded, not "up".
+  // for normal browsing: that's degraded, not "up".
   if (effectiveStatus === 'up' && !dnsOk) effectiveStatus = 'degraded';
   return {
     t: Date.now(),

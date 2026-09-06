@@ -20,7 +20,7 @@ Then open http://localhost:5757
 
 This creates a LaunchAgent in `~/Library/LaunchAgents` that starts the monitor on login and restarts it if it crashes.
 
-On every start the service first does a `git pull` (and an `npm install` if the lockfile changed) so it always runs the latest pushed version. If the pull fails — no network yet at login, for example — it just starts the current version.
+On every start the service first does a `git pull` (and an `npm install` if the lockfile changed) so it always runs the latest pushed version. If the pull fails (no network yet at login, for example) it just starts the current version.
 
 ## Uninstalling the service
 

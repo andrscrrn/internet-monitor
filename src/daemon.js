@@ -28,7 +28,7 @@ async function tick() {
 
     // If no checks ran for a while (machine asleep/off, process stopped),
     // that time is unmonitored: an outage that was ongoing when the gap
-    // started ended — as far as we can attest — at the last sample we saw,
+    // started ended, as far as we can attest, at the last sample we saw,
     // and the first checks after waking get a grace period so a network
     // stack that's still reconnecting isn't logged as a new outage.
     const prevT = state.lastSample?.t ?? null;
@@ -49,7 +49,7 @@ async function tick() {
 
     if (sample.status === 'down') {
       if (inWakeGrace) {
-        // still reconnecting after wake — don't start an outage yet
+        // still reconnecting after wake; don't start an outage yet
       } else {
         if (!state.ongoingOutageStart) {
           state.ongoingOutageStart = sample.t;
